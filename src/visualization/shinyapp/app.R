@@ -1,4 +1,5 @@
 library(shiny)
+library(shinyjs)
 library(pracma)
 library(tidyverse)
 library(plot3D)
@@ -43,7 +44,7 @@ priceOption <- function(contract, strike, spot, ttm, vol, rfr){
 }
 
 implied_vol <- function(price, contract, spot, ttm){
-  # Calculates the implied volatility of an option, given its price and other standard parameters.
+  # Approximates the implied volatility of an option, given its price and other standard parameters.
   #
   # Args:
   #   price (numeric):
@@ -56,8 +57,11 @@ implied_vol <- function(price, contract, spot, ttm){
   #
   # Returns:
   #   vol
-  # Brenner and Subrahmanyam (1988) 
-  # ??n???BS(??n)???P??(??n)
+  #
+  # Notes:
+  #   Approximation formula from Brenner and Subrahmanyam (1988)
+  #   Will be updated to make use of the improved approximation from Corrado & Miller (1996), or Stefanica and Radoicic (2017).
+  #
   vol <- (sqrt((2*pi)/ttm)* price/spot)
   return(vol)
 }
@@ -95,7 +99,7 @@ ui <- fluidPage(
                                   choices=c("Call","Put"),
                                   selected='Call')
                    ),
-                 mainPanel(plotlyOutput("mainplot", width="150%", height="175%")))
+                 mainPanel(plotlyOutput("greekplot", width="150%", height="175%")))
                   ),
         
         # P/L Chart Panel
@@ -118,7 +122,7 @@ ui <- fluidPage(
                          
             uiOutput("impVol")
           ),
-          mainPanel()),
+          mainPanel(plotlyOutput("volsurface", width="150%", height="175%"))),
                  
                  tableOutput("pricing")),
         
@@ -133,7 +137,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   # Greek Surface Tab
-  output$mainplot <- renderPlotly({
+  output$greekplot <- renderPlotly({
     
     greek <- tolower(input$greek)
     strike <- as.numeric(input$strike)
@@ -142,7 +146,8 @@ server <- function(input, output, session) {
     money_range=c(0.5, 1.5)
     
     
-       ## Moneyness will need to be determined based on the contract type I think.
+      ## Moneyness will need to be determined based on the contract type I think, unless I can find a way to just change labels and
+      ## not the values underlying the calculation.
     
       moneyness <-  seq(from=strike*input$money_range[1],
                         to=strike*input$money_range[2],by=(strike*input$money_range[2] - strike*input$money_range[1])/100)
@@ -159,8 +164,6 @@ server <- function(input, output, session) {
       Z <- pnorm(d1)
       
 
-     # layout(add_surface(plot_ly(z = ~Z), x=grid$X, y=grid$Y),
-       #        xaxis=list(title="Moneyness"), yaxis=list(title="Maturity"), zaxis=list(title="Delta"))
       plot_ly(z = ~Z) %>% layout(
         title = glue("{capitalize(greek)} Surface"),
         scene = list(
@@ -178,7 +181,8 @@ server <- function(input, output, session) {
   
   # Pricing Tab
   
-  
+  # Goal is to have pricing/implied vol update when the other is changed.
+  # Maybe add a reload button?
   output$priceInput <- renderUI({
     pricing_contract <- tolower(input$pricing_contract)
     spot <- as.numeric(input$spot)
@@ -198,12 +202,36 @@ server <- function(input, output, session) {
     ttm <- as.numeric(input$ttm)
     strike <- as.numeric(input$strike)
     rfr <- as.numeric(input$rfr)
+    optionPrice <- as.numeric(input$optionPrice)
     
     tagList(
       
     textInput("pricing_vol", "(Implied) Volatility",
-              value=implied_vol(input$optionPrice, 0.13, pricing_contract, strike, spot, ttm, rfr))
-  )})  
+              value=implied_vol(optionPrice, pricing_contract, spot, ttm))
+  )})
+  
+  # Implied volatility surface
+  output$volsurface <- renderPlotly({
+    pricing_contract <- tolower(input$pricing_contract)
+    optionPrice <- as.numeric(input$optionPrice)
+    maturities <-  seq(from=1, to=100, by=1)
+    price_range <- seq(from=-optionPrice*3, to=optionPrice*3,
+                       by=0.1)
+    grid <- meshgrid(x=price_range, y=maturities)
+    spot <- as.numeric(input$spot)
+    
+    Z <- implied_vol(grid$X, pricing_contract, spot, grid$Y)
+    
+    # layout(add_surface(plot_ly(z = ~Z), x=grid$X, y=grid$Y),
+    #        xaxis=list(title="Moneyness"), yaxis=list(title="Maturity"), zaxis=list(title="Delta"))
+    plot_ly(z = ~Z) %>% layout(
+      title = "Implied Volatility Surface",
+      scene = list(
+        xaxis = list(title = "Price"),
+        yaxis = list(title = "DTM"),
+        zaxis = list(title ="IV")
+      )) %>%  add_surface(x=grid$X, y=grid$Y)
+  })
   
   
   # Strategy Builder tab
