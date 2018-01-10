@@ -114,21 +114,4 @@ plot_surface <- function()
 
     # Python.
 
-  
-priceOption <- function(contract, strike, spot, ttm, vol, rfr){
-  d1 <- (1/vol*sqrt(ttm))* (log(spot/strike) + (rfr + ((vol^2)/2))*ttm)
-  d2 <- d1 - vol*sqrt(ttm)priceOption <- function(contract, strike, spot, ttm, vol, rfr)
-    
-  if(contract=='call'){
-    out <- pnorm(d1)*spot - pnorm(d2)*strike*exp(-rfr*ttm)
-    return(out)
-  }
-  else if(contract=='put'){
-    out <- pnorm(-d2)*strike*exp(-rfr*ttm) - pnorm(-d1)*spot
-    return(out)
-  }
-  else{
-    return(glue("{capitalize(contract)} is not a valid contract type"))
-  }
-}
 
