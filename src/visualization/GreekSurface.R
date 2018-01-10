@@ -86,12 +86,6 @@ greekSurface <- function(greek, contract, strike=1, vol=0.15, rfr=0.05,
           return(glue("Contract type: {contract} is not a valid input"))
       }
   }
-
-  #################### CONTINUE FROM HERE
-  elif greek == 'psi':
-      for i in self.moneyness:
-          for j in self.maturities:
-              toplot = Option('TEST', [self.moneyness[i], 1, self.rfr, self.vol, self.maturities[j]])
   }
 
 

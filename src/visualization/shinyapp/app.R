@@ -4,6 +4,8 @@ library(tidyverse)
 library(plot3D)
 library(plotly)
 library(Hmisc)
+library(glue)
+
 
 priceOption <- function(contract, strike, spot, ttm, vol, rfr){
   # Calculates the theoretical price of a European-style option contract
@@ -20,7 +22,7 @@ priceOption <- function(contract, strike, spot, ttm, vol, rfr){
   #
   #
   # Returns:
-  #
+  #   out (numeric): Black Scholes theoretical price for a Europoean-style option.
   #
   #
   #
@@ -40,6 +42,25 @@ priceOption <- function(contract, strike, spot, ttm, vol, rfr){
   }
 }
 
+implied_vol <- function(price, contract, spot, ttm){
+  # Calculates the implied volatility of an option, given its price and other standard parameters.
+  #
+  # Args:
+  #   price (numeric):
+  #   previous_vol (numeric):
+  #   contract (char):
+  #   strike (numeric):
+  #   spot (numeric):
+  #   ttm (numeric):
+  #   rfr (numeric):
+  #
+  # Returns:
+  #   vol
+  # Brenner and Subrahmanyam (1988) 
+  # ??n???BS(??n)???P??(??n)
+  vol <- (sqrt((2*pi)/ttm)* price/spot)
+  return(vol)
+}
 
 
 calc_d <- function(grid, strike, vol, rfr){
@@ -50,40 +71,68 @@ calc_d <- function(grid, strike, vol, rfr){
 ui <- fluidPage(
   
   titlePanel("BlackScholes Options Dashboard"),
-  sidebarLayout(
-    sidebarPanel(
-      textInput("strike", label = "Strike Price", value = 1),
-      textInput("rfr", label = "'Risk-free' Rate", value = 0.05),
-      textInput("vol", label = "Volatility", value = 0.13),
-      sliderInput('maturity', "Maturity",
-                  min=1, max=1095, value = 90,
-                  sep="", step=1),
-      sliderInput('money_range', "Moneyness",
-                  min=0, max=2, value = c(0.5, 1.5),
-                  sep="", step=0.1),
-      selectInput("greek", "Greek", 
-                  choices=c('Delta','Vega', 'Theta', 'Rho', 'Psi'),
-                  selected='Delta'),
-      radioButtons('contract', label="Contract Type",
-                   choices=c("Call","Put"),
-                   selected='Call')
-      ),
 
     mainPanel(
       tabsetPanel(
-        tabPanel("Greek Surface", plotlyOutput("mainplot")),
+        
+        # Greek Surface Panel
+        tabPanel("Greek Surface", 
+                 sidebarLayout(
+                   sidebarPanel(
+                     textInput("strike", label = "Strike Price", value = 1),
+                     textInput("rfr", label = "'Risk-free' Rate", value = 0.05),
+                     textInput("vol", label = "Volatility", value = 0.13),
+                     sliderInput('maturity', "Maturity",
+                                 min=1, max=1095, value = 90,
+                                 sep="", step=1),
+                     sliderInput('money_range', "Moneyness",
+                                 min=0, max=2, value = c(0.5, 1.5),
+                                 sep="", step=0.1),
+                     selectInput("greek", "Greek", 
+                                 choices=c('Delta','Vega', 'Theta', 'Rho', 'Psi'),
+                                 selected='Delta'),
+                     radioButtons('contract', label="Contract Type",
+                                  choices=c("Call","Put"),
+                                  selected='Call')
+                   ),
+                 mainPanel(plotlyOutput("mainplot", width="150%", height="175%")))
+                  ),
+        
+        # P/L Chart Panel
         tabPanel("P/L Chart", tableOutput("plchart")),
-        tabPanel("Pricing", tableOutput("pricing")),
+        
+        # Pricing Panel
+        tabPanel("Pricing", sidebarLayout(
+          sidebarPanel(
+            textInput("spot", "Spot Price",
+                      value = 50),
+            textInput("ttm", "Time to Maturity (Years)",
+                      value = 50),
+            textInput("strike", "Strike Price",
+                      value = 50),
+            textInput("rfr", "Spot Price",
+                      value = 50),
+            radioButtons('pricing_contract', "Contract Type",
+                         choices=c("Call","Put")),
+            uiOutput("priceInput"),
+                         
+            uiOutput("impVol")
+          ),
+          mainPanel()),
+                 
+                 tableOutput("pricing")),
+        
+        
         tabPanel("Strategy Planner", uiOutput('strategy'))
       )
     )
   
   
-))
+)
 
 server <- function(input, output, session) {
   
-  
+  # Greek Surface Tab
   output$mainplot <- renderPlotly({
     
     greek <- tolower(input$greek)
@@ -121,15 +170,43 @@ server <- function(input, output, session) {
         )) %>%  add_surface(x=grid$X, y=grid$Y)
   })  
   
+  # P/L Chart Tab
   output$plchart <- renderTable({
     moneyness
     
   })
   
-  output$pricing <- renderTable({
-    
-  })
+  # Pricing Tab
   
+  
+  output$priceInput <- renderUI({
+    pricing_contract <- tolower(input$pricing_contract)
+    spot <- as.numeric(input$spot)
+    ttm <- as.numeric(input$ttm)
+    strike <- as.numeric(input$strike)
+    rfr <- as.numeric(input$rfr)
+    
+    tagList(
+      
+      textInput("optionPrice", "Option Price",
+                  value = priceOption(pricing_contract, strike, spot, ttm, vol, rfr))
+     )})
+  
+  output$impVol <- renderUI({
+    pricing_contract <- tolower(input$pricing_contract)
+    spot <- as.numeric(input$spot)
+    ttm <- as.numeric(input$ttm)
+    strike <- as.numeric(input$strike)
+    rfr <- as.numeric(input$rfr)
+    
+    tagList(
+      
+    textInput("pricing_vol", "(Implied) Volatility",
+              value=implied_vol(input$optionPrice, 0.13, pricing_contract, strike, spot, ttm, rfr))
+  )})  
+  
+  
+  # Strategy Builder tab
   output$strategy <- renderUI({
     
   })
