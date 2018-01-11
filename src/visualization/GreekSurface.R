@@ -102,7 +102,25 @@ greekSurface <- function(greek, contract, strike=1, vol=0.15, rfr=0.05,
 
 
 
-plot_surface <- function()
+plot_surface <- function(greekSurface){
+  # Plotting method for the greekSurface object. 
+  #
+  # Args:
+  #   greekSurface (obj): greekSurface object containing the option details.
+  #
+  # Returns:
+  #   3D surface plot using Plotly's API.
+  #
+  #
+  plot_ly(z = ~greekSurface$Z) %>% layout(
+    title = glue("{capitalize(greekSurface$greek)} Surface"),
+    scene = list(
+      xaxis = list(title = "Moneyness"),
+      yaxis = list(title = "Maturity"),
+      zaxis = list(title = glue({greek}))
+    )) %>%  add_surface(x=greekSurface$X, y=greekSurface$Y)
+  
+}
 
 
 
