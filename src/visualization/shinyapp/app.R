@@ -88,13 +88,17 @@ ui <- fluidPage(
                      textInput("vol", label = "Volatility", value = 0.13),
                      sliderInput('maturity', "Maturity",
                                  min=1, max=1095, value = 90,
-                                 sep="", step=1),
+                                 sep="", step=15),
                      sliderInput('money_range', "Moneyness",
                                  min=0, max=2, value = c(0.5, 1.5),
                                  sep="", step=0.1),
+                     # This input will need to be moved to a renderUI element conditional on "greekOrder"
                      selectInput("greek", "Greek", 
                                  choices=c('Delta','Vega', 'Theta', 'Rho', 'Psi'),
                                  selected='Delta'),
+                     radioButtons('greekOrder', "Order",
+                                  choices=c("First","Second","Third"),
+                                  selected="First"),
                      radioButtons('contract', label="Contract Type",
                                   choices=c("Call","Put"),
                                   selected='Call')
@@ -175,7 +179,7 @@ server <- function(input, output, session) {
         scene = list(
           xaxis = list(title = "Moneyness"),
           yaxis = list(title = "Maturity"),
-          zaxis = list(title = glue({greek}))
+          zaxis = list(title = glue({capitalize(greek)}))
         )) %>%  add_surface(x=grid$X, y=grid$Y)
   })  
   
