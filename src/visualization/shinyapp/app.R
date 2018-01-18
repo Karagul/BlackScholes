@@ -98,7 +98,7 @@ ui <- fluidPage(
                      textInput("rfr", label = "'Risk-free' Rate", value = 0.05),
                      textInput("vol", label = "Volatility", value = 0.13),
                      sliderInput('maturity', "Maturity",
-                                 min=1, max=1095, value = 90,
+                                 min=1, max=365, value = 90,
                                  sep="", step=15),
                      sliderInput('money_range', "Moneyness",
                                  min=0, max=2, value = c(0.5, 1.5),
