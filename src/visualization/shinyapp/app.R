@@ -66,11 +66,22 @@ implied_vol <- function(price, contract, spot, ttm){
   return(vol)
 }
 
-
 calc_d <- function(grid, strike, vol, rfr){
   # Calculates the d1 portion of the Black Scholes formula
   out <- (1/(vol*sqrt(grid$Y)))*(log(grid$X)/strike) + ((rfr + ((vol^2))*grid$Y))
 }
+
+calc_vega <- function(contract, grid, strike, vol, rfr){
+  #
+  # Compute Vega's surface given parameters for an option
+  #
+  d1 <- calc_d(grid, strike, vol, rfr)
+  d2 <- d1 - vol*sqrt(grid$Y)
+  
+  vega <- strike * exp((-rfr) * grid$Y) * dnorm(d2) * sqrt(grid$Y)
+  return(vega)
+}
+
 
 ui <- fluidPage(
   
@@ -170,8 +181,8 @@ server <- function(input, output, session) {
       d1 <- calc_d(grid, strike, vol, rfr)
       d2 <- d1 - vol*sqrt(grid$Y)
       
-
-      Z <- pnorm(d1)
+      vega <- calc_vega(contract, grid, strike, vol, rfr)  
+      Z <- (-vega/(vol^2)) *((d1*d2*(1-(d1*d2))) + (d1^2) + (d2^2))
       
 
       plot_ly(z = ~Z) %>% layout(
@@ -182,6 +193,9 @@ server <- function(input, output, session) {
           zaxis = list(title = glue({capitalize(greek)}))
         )) %>%  add_surface(x=grid$X, y=grid$Y)
   })  
+  
+  # Snap to viewpoint buttons -- constrained navigation
+  # 
   
   # P/L Chart Tab
   output$strategies <- renderUI({

@@ -47,8 +47,9 @@ Ties in with the P/L Chart tab
 
 * [Shiny API](https://shiny.rstudio.com/reference/shiny/1.0.5/)
 
-* [Corrado and Miller (1996) Implied Volatility approximations.](http://quantlabs.net/academy/download/free_quant_instituitional_books_/%5BJournal%20of%20Banking%20Finance,%20Corrado%5D%20A%20note%20on%20a%20simple,%20accurate%20formula%20to%20compute%20implied%20standard%20deviations.pdf)
+* Implied Voltility Approximations: [Corrado and Miller (1996)](http://quantlabs.net/academy/download/free_quant_instituitional_books_/%5BJournal%20of%20Banking%20Finance,%20Corrado%5D%20A%20note%20on%20a%20simple,%20accurate%20formula%20to%20compute%20implied%20standard%20deviations.pdf)
 
+* Know Your Weapon I & II: [Haug, Epsen (2005)](http://www.espenhaug.com/articles.html)
 
 
 ### Author
