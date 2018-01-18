@@ -1,9 +1,38 @@
 # Utility Functions for calculating Option Greeks.
-"""
-This 
 
-"""
+"
+This R file contains functions to calculation options greeks for use in the GreekSurface object, for plotting in the Shiny app.
 
+Also contains other useful utilities needed for the greek calculations such as d1.
+
+Currently Supported Greeks are as follows:
+
+First Order:
+  Delta == Dprice/Dspot
+  Vega == Dprice/Dvol
+  Theta == Dprice/Dtime
+  Rho == Dprice/Drfr
+
+Second Order:
+  Gamma == Ddelta/Dspot
+  Vanna == Dvega/Dspot or Ddelta/Dvol
+  Charm == Ddelta/Dtime
+  Vomma == Dvega/Dvol
+  Veta == Dvega/Dtime
+
+Third Order:
+  Colour == DgammaDtime
+  Zomma == DgammaDvol
+  Thega == 
+  Speed == DgammaDspot
+  Ultima == DvommaDvol
+"
+# Calculation for d1, which can then be used to compute d2. Needed for all greeks.
+calc_d <- function(grid, strike, vol, rfr){
+  # Calculates the d1 portion of the Black Scholes formula
+  out <- (1/(vol*sqrt(grid$Y)))*(log(grid$X)/strike) + ((rfr + ((vol^2))*grid$Y))
+  return(out)
+}
 
 # First Order Greeks
 calc_delta <- function(contract, grid, strike, vol, rfr){
@@ -33,7 +62,7 @@ calc_vega <- function(contract, grid, strike, vol, rfr){
   
   vega <- strike * exp((-rfr) * grid$Y) * dnorm(self.d2) * sqrt(grid$Y)
   return(vega)
-}  #Dprice/Dbvol
+}  #Dprice/Dvol
 
 
 calc_theta <- function(contract, grid, strike, vol, rfr){

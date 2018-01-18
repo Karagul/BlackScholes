@@ -7,11 +7,8 @@ library(tidyverse)
 library(pracma)
 library(plotly)
 
-calc_d <- function(grid, strike, vol, rfr){
-  # Calculates the d1 portion of the Black Scholes formula
-  out <- (1/(vol*sqrt(grid$Y)))*(log(grid$X)/strike) + ((rfr + ((vol^2))*grid$Y))
-}
 
+source("C:\\Users\\Tyler\\PycharmProjects\\BlackScholes\\src\\utils\\greeks.R")
 
 
 ui <- fluidPage(
