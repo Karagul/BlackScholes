@@ -1,8 +1,14 @@
 # ------------------------------- Imports ---------------------------------------- #
+library(pracma)
+library(tidyverse)
+library(plotly)
+library(Hmisc)
+library(glue)
+
 
 priceOption <- function(contract, strike, spot, ttm, vol, rfr){
   # Calculates the theoretical price of a European-style option contract
-  # ## SHOULD I JUST FEED D1 INTO THIS TO MINIMIZE CALCULATIONS? ##
+  # ## SHOULD I JUST FEED D1 INTO THIS TO MINIMIZE CALCULATIONS HERE? ##
   # 
   # Args:
   #
@@ -37,6 +43,7 @@ priceOption <- function(contract, strike, spot, ttm, vol, rfr){
 
 implied_vol <- function(price, contract, spot, ttm){
   # Approximates the implied volatility of an option, given its price and other standard parameters.
+  # Currently does fairly well within 10% of the current spot price, but errors begin to get large outside of that.
   #
   # Args:
   #   price (numeric):

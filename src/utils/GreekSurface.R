@@ -11,7 +11,7 @@ calc_d <- function(grid, strike, vol, rfr){
 
 
 greekSurface <- function(order, greek, contract, strike=1, vol=0.15, rfr=0.05,
-                         maturity=2, money_range=c(0.5, 1.5)) {
+                         maturity=1, money_range=c(0.5, 1.5)) {
 
   # Surface object for 3d plots of option greeks. Takes in arguments for the parameters of the plot.
   #
@@ -32,8 +32,8 @@ greekSurface <- function(order, greek, contract, strike=1, vol=0.15, rfr=0.05,
   #             money_range refers to moneyness, and the ranges are for the axes limits.
   #
 
-    moneyness <-  seq(from=strike*money_range[0],
-                 to=strike*money_range[1],by=(strike*money_range[1] - strike*money_range[0])/100)
+    moneyness <-  seq(from=strike*money_range[1],
+                 to=strike*money_range[2],by=(strike*money_range[2] - strike*money_range[1])/100)
     maturities <- seq(from=1, to=maturity*365 ,by=1)
   
   
@@ -56,6 +56,7 @@ greekSurface <- function(order, greek, contract, strike=1, vol=0.15, rfr=0.05,
         return(glue("Greek type: {greek} is not a valid input, or not a first-order greek"))
       }
     }
+    
     else if(order=="Second"){
       if(greek == 'gamma'){
         Z <- calc_gamma(contract, grid, strike, vol, rfr)
@@ -76,6 +77,7 @@ greekSurface <- function(order, greek, contract, strike=1, vol=0.15, rfr=0.05,
         return(glue("Greek type: {greek} is not a valid input, or not a second-order greek"))
       }
     }
+    
     else if(order=="Third"){
       if(greek == 'colour'){
         Z <- calc_colour(contract, grid, strike, vol, rfr) 
@@ -94,13 +96,13 @@ greekSurface <- function(order, greek, contract, strike=1, vol=0.15, rfr=0.05,
       }
       else{
         return(glue("Greek type: {greek} is not a valid input"))
-      }  
+      }
+    }
+    
     else{
       return(glue("Greek order: {order} is not a valid input"))
     }
       
-    
-}
 
 
 
@@ -135,24 +137,3 @@ plot_surface <- function(greekSurface){
     )) %>%  add_surface(x=greekSurface$X, y=greekSurface$Y)
   
 }
-
-
-
-  
-priceOption <- function(contract, strike, spot, ttm, vol, rfr){
-  d1 <- (1/vol*sqrt(ttm))* (log(spot/strike) + (rfr + ((vol^2)/2))*ttm)
-  d2 <- d1 - vol*sqrt(ttm)priceOption <- function(contract, strike, spot, ttm, vol, rfr)
-    
-  if(contract=='call'){
-    out <- pnorm(d1)*spot - pnorm(d2)*strike*exp(-rfr*ttm)
-    return(out)
-  }
-  else if(contract=='put'){
-    out <- pnorm(-d2)*strike*exp(-rfr*ttm) - pnorm(-d1)*spot
-    return(out)
-  }
-  else{
-    return(glue("{capitalize(contract)} is not a valid contract type"))
-  }
-}
-
