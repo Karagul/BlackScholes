@@ -38,6 +38,7 @@ greekSurface <- function(order, greek, contract, strike=1, vol=0.15, rfr=0.05,
   
   
     grid <- meshgrid(moneyness, maturities)
+    
     if(order=="First"){
       if(greek=='delta'){
         Z <- calc_delta(contract, grid, strike, vol, rfr)
