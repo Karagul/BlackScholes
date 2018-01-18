@@ -10,7 +10,7 @@ calc_d <- function(grid, strike, vol, rfr){
 }
 
 
-greekSurface <- function(greek, contract, strike=1, vol=0.15, rfr=0.05,
+greekSurface <- function(order, greek, contract, strike=1, vol=0.15, rfr=0.05,
                          maturity=2, money_range=c(0.5, 1.5)) {
 
   # Surface object for 3d plots of option greeks. Takes in arguments for the parameters of the plot.
@@ -31,67 +31,80 @@ greekSurface <- function(greek, contract, strike=1, vol=0.15, rfr=0.05,
   #             strike is if using actual stock data rather than a generic surface. vol and rfr are parameters for the greeks.
   #             money_range refers to moneyness, and the ranges are for the axes limits.
   #
-  #
-  #
-  #
 
-  moneyness <-  seq(from=strike*money_range[0],
-               to=strike*money_range[1],by=(strike*money_range[1] - strike*money_range[0])/100)
-  maturities <- seq(from=1, to=maturity*365 ,by=1)
-
-
-  grid <- meshgrid(moneyness, maturities)
-  d1 <- calc_d(grid, strike, vol, rfr)
-  d2 <- d1 - vol*sqrt(grid$Y)
-
-  if(greek=='delta'){
-      if(contract='call'){
-          Z <- pnorm(d1)
+    moneyness <-  seq(from=strike*money_range[0],
+                 to=strike*money_range[1],by=(strike*money_range[1] - strike*money_range[0])/100)
+    maturities <- seq(from=1, to=maturity*365 ,by=1)
+  
+  
+    grid <- meshgrid(moneyness, maturities)
+    if(order=="First"){
+      if(greek=='delta'){
+        Z <- calc_delta(contract, grid, strike, vol, rfr)
       }
-      else if(contract='put'){
-          Z <- -pnorm(-d1)
+      else if(greek=='vega'){
+        Z <- calc_vega(contract, grid, strike, vol, rfr)
+      }
+      else if(greek == 'theta'){
+        Z <- calc_theta(contract, grid, strike, vol, rfr)
+      }
+      else if(greek == 'rho'){
+        Z <- calc_rho(contract, grid, strike, vol, rfr)
       }
       else{
-          return(glue("Contract type: {contract} is not a valid input"))
+        return(glue("Greek type: {greek} is not a valid input, or not a first-order greek"))
       }
-  else if(greek=='vega'){
-      Z = strike * exp((-rfr) * grid$Y) * dnorm(self.d2) * sqrt(grid$Y)
-  }
-
-  else if(greek == 'theta'){
-        if(contract == 'call'){
-            Z = -((X * dnorm(d1) * vol) / (2 * grid$Y)) - (rfr * strike * exp((-rfr) * grid$Y) * pnorm(d2))
-        }
-
-        else if(contract == 'put'){
-            Z = -((X * dnorm(d1) * vol) / (2 * grid$Y)) + (self.rfr * self.strike * np.exp((-self.rfr) * self.Y) * scipy.stats.norm.cdf(-self.d2))
-        }
-
-        else{
-            return(glue("Contract type: {contract} is not a valid input"))
-        }
-  }
-
-
-  else if(greek == 'rho'){
-      if(contract == 'call'){
-          Z = strike * grid$Y * exp((-rfr) * grid$Y) * pnorm(d2)
+    }
+    else if(order=="Second"){
+      if(greek == 'gamma'){
+        Z <- calc_gamma(contract, grid, strike, vol, rfr)
       }
-
-      else if(contract == 'put'){
-      Z = -(strike * grid$Y * exp((-rfr) * grid$Y) * pnorm(-d2))
+      else if(greek == 'vanna'){
+        Z <- calc_vanna(contract, grid, strike, vol, rfr)
       }
-
+      else if(greek == 'charm'){
+        Z <- calc_charm(contract, grid, strike, vol, rfr)
+      }
+      else if(greek == 'vomma'){
+        Z <- calc_vomma(contract, grid, strike, vol, rfr)
+      }
+      else if(greek == 'veta'){
+        Z <- calc_veta(contract, grid, strike, vol, rfr)
+      }
       else{
-          return(glue("Contract type: {contract} is not a valid input"))
+        return(glue("Greek type: {greek} is not a valid input, or not a second-order greek"))
       }
-  }
-  }
+    }
+    else if(order=="Third"){
+      if(greek == 'colour'){
+        Z <- calc_colour(contract, grid, strike, vol, rfr) 
+      }
+      else if(greek == 'zomma'){
+        Z <- calc_zomma(contract, grid, strike, vol, rfr)
+      }
+      else if(greek == 'thega'){
+        Z <- calc_thega(contract, grid, strike, vol, rfr) 
+      }
+      else if(greek == 'speed'){
+        Z <- calc_speed(contract, grid, strike, vol, rfr) 
+      }
+      else if(greek == 'ultima'){
+        Z <- calc_ultima(contract, grid, strike, vol, rfr) 
+      }
+      else{
+        return(glue("Greek type: {greek} is not a valid input"))
+      }  
+    else{
+      return(glue("Greek order: {order} is not a valid input"))
+    }
+      
+    
+}
 
 
 
 
-  obj <- list(greek=greek, contract=contract, X=grid$X, Y=grid$Y, Z=Z, strike=strike, vol=vol, rfr=rfr,
+  obj <- list(order=order, greek=greek, contract=contract, X=grid$X, Y=grid$Y, Z=Z, strike=strike, vol=vol, rfr=rfr,
               moneyness=moneyness, maturities=maturities, d1=d1)
 
    # Set the name of the class returned by this class function
@@ -123,8 +136,6 @@ plot_surface <- function(greekSurface){
 }
 
 
-
-    # Python.
 
   
 priceOption <- function(contract, strike, spot, ttm, vol, rfr){
