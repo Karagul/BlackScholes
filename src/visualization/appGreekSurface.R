@@ -7,6 +7,10 @@ library(tidyverse)
 library(pracma)
 library(plotly)
 
+calc_d <- function(grid, strike, vol, rfr){
+  # Calculates the d1 portion of the Black Scholes formula
+  out <- (1/(vol*sqrt(grid$Y)))*(log(grid$X)/strike) + ((rfr + ((vol^2))*grid$Y))
+}
 
 
 
@@ -75,7 +79,7 @@ server <- function(input, output, session) {
           strike <- as.numeric(input$strike)
           vol <- as.numeric(input$vol)
           rfr <- as.numeric(input$rfr)
-          money_range=c(0.5, 1.5)
+          money_range=c(input$money_range[1], input$money_range[2])
 
 
             ## Moneyness will need to be determined based on the contract type I think, unless I can find a way to just change labels and
