@@ -103,10 +103,7 @@ ui <- fluidPage(
                      sliderInput('money_range', "Moneyness",
                                  min=0, max=2, value = c(0.5, 1.5),
                                  sep="", step=0.1),
-                     # This input will need to be moved to a renderUI element conditional on "greekOrder"
-                     selectInput("greek", "Greek", 
-                                 choices=c('Delta','Vega', 'Theta', 'Rho', 'Psi'),
-                                 selected='Delta'),
+                     uiOutput("greekType"),
                      radioButtons('greekOrder', "Order",
                                   choices=c("First","Second","Third"),
                                   selected="First"),
@@ -158,6 +155,32 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   
   # Greek Surface Tab
+  output$greekType <- renderUI({
+    
+    possible_greeks <- as.tibble(t(as.data.frame(list(
+      c('First', "Delta"),
+      c('First', "Vega"),
+      c('First', "Theta"),
+      c('First',"Rho"),
+      c("Second","Gamma"),
+      c("Second","Vanna"),
+      c("Second","Charm"),
+      c("Second","Vomma"),
+      c("Second","Veta"),
+      c("Third","Colour"),
+      c("Third","Zomma"),
+      c("Third","Thega"),
+      c("Third","Speed"),
+      c("Third","Ultima")))))
+    
+    names(possible_greeks) <- c('order', 'greek')
+    
+    selectInput("greek", "Greek",
+                choices=filter(possible_greeks, 
+                               order==input$greekOrder)$greek)
+  })
+  
+  
   output$greekplot <- renderPlotly({
     
     greek <- tolower(input$greek)

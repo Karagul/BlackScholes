@@ -30,7 +30,6 @@ ui <- fluidPage(
                                          min=0, max=2, value = c(0.5, 1.5),
                                          sep="", step=0.1),
                              uiOutput("greekType"),
-                             # This input will need to be moved to a renderUI element conditional on "greekOrder
                              radioButtons('greekOrder', "Order",
                                           choices=c("First","Second","Third"),
                                           selected="First"),
