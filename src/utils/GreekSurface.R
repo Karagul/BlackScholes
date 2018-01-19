@@ -34,7 +34,7 @@ greekSurface <- function(order, greek, contract, strike=1, vol=0.15, rfr=0.05,
 
     moneyness <-  seq(from=strike*money_range[1],
                  to=strike*money_range[2],by=(strike*money_range[2] - strike*money_range[1])/100)
-    maturities <- seq(from=1, to=maturity*365 ,by=1)
+    maturities <- seq(from=1, to=maturity, by=1)
   
   
     grid <- meshgrid(moneyness, maturities)
@@ -108,7 +108,7 @@ greekSurface <- function(order, greek, contract, strike=1, vol=0.15, rfr=0.05,
 
 
   obj <- list(order=order, greek=greek, contract=contract, X=grid$X, Y=grid$Y, Z=Z, strike=strike, vol=vol, rfr=rfr,
-              moneyness=moneyness, maturities=maturities, d1=d1)
+              moneyness=moneyness, maturities=maturities)
 
    # Set the name of the class returned by this class function
   class(obj) <- append(class(obj), "greekSurface")

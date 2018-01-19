@@ -3,7 +3,7 @@
 "
 This R file contains functions to calculation options greeks for use in the GreekSurface object, for plotting in the Shiny app.
 
-Also contains other useful utilities needed for the greek calculations such as d1.
+Also contains other useful utilities needed for the greek calculations such as d1 from the BSM formula.
 
 Currently Supported Greeks are as follows:
 
@@ -34,6 +34,7 @@ calc_d <- function(grid, strike, vol, rfr){
   return(out)
 }
 
+
 # First Order Greeks
 calc_delta <- function(contract, grid, strike, vol, rfr){
   #
@@ -60,7 +61,7 @@ calc_vega <- function(contract, grid, strike, vol, rfr){
   d1 <- calc_d(grid, strike, vol, rfr)
   d2 <- d1 - vol*sqrt(grid$Y)
   
-  vega <- strike * exp((-rfr) * grid$Y) * dnorm(self.d2) * sqrt(grid$Y)
+  vega <- strike * exp((-rfr) * grid$Y) * dnorm(d2) * sqrt(grid$Y)
   return(vega)
 }  #Dprice/Dvol
 

@@ -10,6 +10,8 @@ library(plotly)
 
 source("C:\\Users\\Tyler\\PycharmProjects\\BlackScholes\\src\\utils\\greeks.R")
 
+source("C:\\Users\\Tyler\\PycharmProjects\\BlackScholes\\src\\utils\\GreekSurface.R")
+
 
 ui <- fluidPage(
 
@@ -70,6 +72,20 @@ server <- function(input, output, session) {
                                order==input$greekOrder)$greek)
   })
     
+  react_z <- reactive({
+    contract <- tolower(input$contract)
+    greek <- tolower(input$greek)
+    strike <- as.numeric(input$strike)
+    vol <- as.numeric(input$vol)
+    rfr <- as.numeric(input$rfr)
+    money_range=c(input$money_range[1], input$money_range[2])
+    
+    greekSurface(order=input$greekOrder, greek=greek, contract=contract, strike=strike, vol=vol, rfr=rfr,
+                      maturity=input$maturity, money_range=money_range)$Z
+  })
+  
+  
+  
       output$greekplot <- renderPlotly({
 
           greek <- tolower(input$greek)
@@ -94,10 +110,7 @@ server <- function(input, output, session) {
             d2 <- d1 - vol*sqrt(grid$Y)
 
 
-            Z <- pnorm(d1)
-
-
-            plot_ly(z = ~Z) %>% layout(
+            plot_ly(z = ~react_z()) %>% layout(
               title = glue("{capitalize(greek)} Surface"),
               scene = list(
                 xaxis = list(title = "Moneyness"),
