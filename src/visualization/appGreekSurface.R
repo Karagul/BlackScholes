@@ -6,6 +6,7 @@ library(shiny)
 library(tidyverse)
 library(pracma)
 library(plotly)
+library(shinycssloaders)
 
 
 source("C:\\Users\\Tyler\\PycharmProjects\\BlackScholes\\src\\utils\\greeks.R")
@@ -40,7 +41,7 @@ ui <- fluidPage(
                                           choices=c("Call","Put"),
                                           selected='Call')
                            ),
-                         mainPanel(plotlyOutput("greekplot", width="150%", height="175%")))
+                         mainPanel(withSpinner(plotlyOutput("greekplot", width="150%", height="175%"))))
                           )
       )))
 
@@ -109,15 +110,14 @@ server <- function(input, output, session) {
             d1 <- calc_d(grid, strike, vol, rfr)
             d2 <- d1 - vol*sqrt(grid$Y)
 
-
             plot_ly(z = ~react_z()) %>% layout(
               title = glue("{capitalize(greek)} Surface"),
               scene = list(
                 xaxis = list(title = "Moneyness"),
                 yaxis = list(title = "Maturity"),
-                zaxis = list(title = glue({capitalize(greek)}))
-              )) %>%  add_surface(x=grid$X, y=grid$Y)
-        })
+                zaxis = list(title = glue("{capitalize(greek)}"))
+              )) %>%  add_surface(x=grid$X, y=grid$Y) 
+        }) 
 }
 
 

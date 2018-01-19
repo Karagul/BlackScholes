@@ -36,7 +36,6 @@ greekSurface <- function(order, greek, contract, strike=1, vol=0.15, rfr=0.05,
                  to=strike*money_range[2],by=(strike*money_range[2] - strike*money_range[1])/100)
     maturities <- seq(from=1, to=maturity, by=1)
   
-  
     grid <- meshgrid(moneyness, maturities)
     
     if(order=="First"){
