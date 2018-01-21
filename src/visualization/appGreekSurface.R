@@ -7,6 +7,8 @@ library(tidyverse)
 library(pracma)
 library(plotly)
 library(shinycssloaders)
+library(glue)
+library(Hmisc)
 
 
 source("C:\\Users\\Tyler\\PycharmProjects\\BlackScholes\\src\\utils\\greeks.R")

@@ -23,7 +23,7 @@ ui <- fluidPage(
       tabsetPanel(
         
         # Greek Surface Panel
-        tabPanel("Greek Surface", 
+        tabPanel("Greek Surface",
                  sidebarLayout(
                    sidebarPanel(
                      textInput("strike", label = "Strike Price", value = 1),
@@ -43,8 +43,8 @@ ui <- fluidPage(
                                   choices=c("Call","Put"),
                                   selected='Call')
                    ),
-                 mainPanel(plotlyOutput("greekplot", width="150%", height="175%")))
-                  ),
+                   mainPanel(withSpinner(plotlyOutput("greekplot", width="150%", height="175%"))))
+        ),
         
         # P/L Chart Panel
         tabPanel("P/L Chart", sidebarLayout(
@@ -112,6 +112,19 @@ server <- function(input, output, session) {
                                order==input$greekOrder)$greek)
   })
   
+  react_z <- reactive({
+    contract <- tolower(input$contract)
+    greek <- tolower(input$greek)
+    strike <- as.numeric(input$strike)
+    vol <- as.numeric(input$vol)
+    rfr <- as.numeric(input$rfr)
+    money_range=c(input$money_range[1], input$money_range[2])
+    
+    greekSurface(order=input$greekOrder, greek=greek, contract=contract, strike=strike, vol=vol, rfr=rfr,
+                 maturity=input$maturity, money_range=money_range)$Z
+  })
+  
+  
   
   output$greekplot <- renderPlotly({
     
@@ -122,33 +135,28 @@ server <- function(input, output, session) {
     money_range=c(input$money_range[1], input$money_range[2])
     
     
+    ## Moneyness will need to be determined based on the contract type I think, unless I can find a way to just change labels and
+    ## not the values underlying the calculation.
     
-      ## Moneyness will need to be determined based on the contract type I think, unless I can find a way to just change labels and
-      ## not the values underlying the calculation.
+    moneyness <-  seq(from=strike*input$money_range[1],
+                      to=strike*input$money_range[2],by=(strike*input$money_range[2] - strike*input$money_range[1])/100)
     
-      moneyness <-  seq(from=strike*input$money_range[1],
-                        to=strike*input$money_range[2],by=(strike*input$money_range[2] - strike*input$money_range[1])/100)
-      
-      maturities <- seq(from=1, to=input$maturity ,by=1)
-      
-      grid <- meshgrid(x=moneyness, y=maturities)
-      
-
-      d1 <- calc_d(grid, strike, vol, rfr)
-      d2 <- d1 - vol*sqrt(grid$Y)
-      
-      vega <- calc_vega(contract, grid, strike, vol, rfr)  
-      Z <- (-vega/(vol^2)) *((d1*d2*(1-(d1*d2))) + (d1^2) + (d2^2))
-      
-
-      plot_ly(z = ~Z) %>% layout(
-        title = glue("{capitalize(greek)} Surface"),
-        scene = list(
-          xaxis = list(title = "Moneyness"),
-          yaxis = list(title = "Maturity"),
-          zaxis = list(title = glue({capitalize(greek)}))
-        )) %>%  add_surface(x=grid$X, y=grid$Y)
-  })  
+    maturities <- seq(from=1, to=input$maturity ,by=1)
+    
+    grid <- meshgrid(x=moneyness, y=maturities)
+    
+    
+    d1 <- calc_d(grid, strike, vol, rfr)
+    d2 <- d1 - vol*sqrt(grid$Y)
+    
+    plot_ly(z = ~react_z()) %>% layout(
+      title = glue("{capitalize(greek)} Surface"),
+      scene = list(
+        xaxis = list(title = "Moneyness"),
+        yaxis = list(title = "Maturity"),
+        zaxis = list(title = glue("{capitalize(greek)}"))
+      )) %>%  add_surface(x=grid$X, y=grid$Y) 
+  }) 
   
   # Snap to viewpoint buttons -- constrained navigation
   # 
