@@ -46,10 +46,14 @@ Ties in with the P/L Chart tab
 * [Plotly R API](https://plot.ly/r/)
 
 * [Shiny API](https://shiny.rstudio.com/reference/shiny/1.0.5/)
+*
+Black, F., & Scholes, M. (1973). The Pricing of Options and Corporate Liabilities. The Journal of Political Economy, 81(3), 637–654. Retrieved from [http://www.jstor.org/stable/1831029](http://www.jstor.org/stable/1831029)
 
-* Implied Voltility Approximations: [Corrado and Miller (1996)](http://quantlabs.net/academy/download/free_quant_instituitional_books_/%5BJournal%20of%20Banking%20Finance,%20Corrado%5D%20A%20note%20on%20a%20simple,%20accurate%20formula%20to%20compute%20implied%20standard%20deviations.pdf)
+Corrado, C. J., & Miller, T. W. (1996). A note on a simple, accurate formula to compute implied standard deviations. Journal of Banking & Finance, 20(1996), 595–603. [https://doi.org/10.1016/0378-4266](https://doi.org/10.1016/0378-4266)(95)00014-3
 
-* Know Your Weapon I & II: [Haug, Epsen (2005)](http://www.espenhaug.com/articles.html)
+Haug, E. G. (2003). The collector: Know your weapon part 2. Wilmott, 4(3), 141–59. [https://doi.org/10.1002/wilm.42820030313](https://doi.org/10.1002/wilm.42820030313)
+
+Haug, E. (2003). Know your weapon, Part 1. Wilmott Magazine, May, 49–57. [https://doi.org/10.1002/wilm.42820030313](https://doi.org/10.1002/wilm.42820030313)
 
 
 ### Author

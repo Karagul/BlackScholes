@@ -27,8 +27,9 @@ ui <- fluidPage(
           uiOutput("premium1"),
           
           # This condition must be in JS
-          conditionalPanel(condition="(['Bull Call Spread', 'Bull Put Spread', 'Secured Short Put',
-            'Married Put', 'Bear Call Spread','Bear Put Spread', 'Short Straddle', 'Short Strangle'].indexOf(input.strategy) >= 0)",
+          conditionalPanel(condition="(['Bull Call Spread', 'Bull Put Spread',
+                                        'Bear Call Spread','Bear Put Spread', 'Short Straddle', 'Short Strangle','Iron Condor',
+                     'Calendar Spread', 'Covered Strangle', 'Long Call Butterfly','Long Straddle', 'Long Strangle', 'Call Backspread', 'Put Backspread'].indexOf(input.strategy) >= 0)",
                            radioButtons("contract2","Contract 1 Type",
                                         choices=c("Call","Put")),
                            textInput("strike2", "Strike 2",
@@ -133,7 +134,7 @@ server <- function(input, output, session) {
   })
   
   output$plHelpText <- renderText({
-    print("Currently implemented P/L plots include: Long Call, Covered Call, Secured Short Put, Bull Call Spread, Bull Put Spread, Collar, Bear Call Spread, Bear Put Spread, Short Straddle, and Short Strangle.
+    print("Currently implemented P/L plots include: Long Call, Covered Call, Secured Short Put, Married Put, Bull Call Spread, Bull Put Spread, Collar, Bear Call Spread, Bear Put Spread, Short Straddle, and Short Strangle.
           
           These plots are designed to help you outline the profit and loss scenarios for a given position. The idea is that you would use these to get a general idea of the strategy you would like to enter, and then you would use the greek surfaces in combintion with the pricing tool to map out risks, and determine exactly which contracts you would like to buy/sell in order to enter into the given strategy.")
   })

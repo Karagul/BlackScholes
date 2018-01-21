@@ -18,8 +18,11 @@ plot_pl <- function(strategy, contract1, strike1, premium1, contract2, strike2, 
   #
   #
   #
-  if(strategy %in% c('Bull Call Spread', 'Bull Put Spread', 'Secured Short Put',
-            'Married Put', 'Bear Call Spread','Bear Put Spread', 'Short Straddle', 'Short Strangle', "Collar")){
+  
+
+  
+  if(strategy %in% c('Bull Call Spread', 'Bull Put Spread', 'Bear Call Spread','Bear Put Spread', 'Short Straddle', 'Short Strangle', "Collar", "Iron Condor",
+                     "Calendar Spread", "Covered Strangle", "Long Call Butterfly","Long Straddle", "Long Strangle", "Call Backspread", "Put Backspread")){
     
     strikes <- c(strike1, strike2)
     mean_strike <- mean(strikes)
@@ -167,7 +170,7 @@ plot_pl <- function(strategy, contract1, strike1, premium1, contract2, strike2, 
     price_at_expiry <- c(0:100)
     
     
-    if(strategy == "Long Call"){
+    if(strategy %in% c("Long Call", "Married Put")){
       
       negx_limit <- -premium1
       posx_limit <- (upper_x - strike1)-premium1
@@ -231,6 +234,40 @@ plot_pl <- function(strategy, contract1, strike1, premium1, contract2, strike2, 
       return(p)
       
       
+    }
+    
+    else if(strategy == "Long Put"){
+      negx_limit <- (strike1 - lower_x) - premium1
+      posx_limit <- -premium1
+      
+      
+      p <-  ggplot(x=price_at_expiry) +
+        geom_hline(yintercept=0, color='red') +
+        
+        geom_segment(aes(x=c(lower_x, strike1),
+                         xend=c(strike1, upper_x),
+                         y=c(negx_limit, posx_limit),
+                         yend=c(posx_limit, posx_limit))) +
+        
+        
+        #Plots the dotted guidelines at each of the kinks in the line.
+        geom_segment(aes(x=strike1,
+                         xend=strike1,
+                         y=0,
+                         yend=-premium1),
+                     linetype="dotted")+
+        
+        
+        
+        
+        xlab("Underlying Price at Expiry") +
+        ylab("Profit") +
+        coord_cartesian(xlim=c(40,60),ylim=c(-5,5)) +
+        ggtitle(glue("{strategy}")) +
+        theme_bw() +
+        scale_y_continuous()+
+        guides(linetype=FALSE)
+      return(p)
     }
     
   }

@@ -77,7 +77,7 @@ calc_theta <- function(contract, grid, strike, vol, rfr){
     theta = -((grid$X * dnorm(d1) * vol) / (2 * grid$Y)) - (rfr * strike * exp((-rfr) * grid$Y) * pnorm(d2))
   }
   else if(contract == 'put'){
-    theta = -((grid$X * dnorm(d1) * vol) / (2 * grid$Y)) + (self.rfr * self.strike * np.exp((-self.rfr) * self.Y) * scipy.stats.norm.cdf(-self.d2))
+    theta = -((grid$X * dnorm(d1) * vol) / (2 * grid$Y)) + (rfr * strike * exp((-rfr) * grid$Y) * pnorm(-d2))
   }
   
   else{
