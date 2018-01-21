@@ -5,6 +5,9 @@
 library(shiny)
 library(tidyverse)
 library(pracma)
+library(shinycssloaders)
+source("C:\\Users\\Tyler\\PycharmProjects\\BlackScholes\\src\\utils\\plcharts.R")
+
 
 ui <- fluidPage(
 
@@ -22,17 +25,20 @@ ui <- fluidPage(
           uiOutput("contract1"),
           uiOutput("strike1"),
           uiOutput("premium1"),
-          # This condition must be JS
-          conditionalPanel(condition="if (['Bull Call Spread', 'Bull Put Spread', 'Covered Call', 'Secured Short Put',
-                           'Married Put', 'Bear Call Spread','Bear Put Spread', 'Short Straddle', 'Short Strangle'].indexOf(input.strategy_names) >= 0",
+          
+          # This condition must be in JS
+          conditionalPanel(condition="(['Bull Call Spread', 'Bull Put Spread', 'Secured Short Put',
+            'Married Put', 'Bear Call Spread','Bear Put Spread', 'Short Straddle', 'Short Strangle'].indexOf(input.strategy) >= 0)",
+                           radioButtons("contract2","Contract 1 Type",
+                                        choices=c("Call","Put")),
                            textInput("strike2", "Strike 2",
                                      value=56),
                            textInput("premium2", "Premium 2",
-                                     value=56)
+                                     value=4)
                            )
 
         ),
-        mainPanel(plotOutput("plchart"))))
+        mainPanel(withSpinner(plotOutput("plchart")), verbatimTextOutput("plHelpText"))))
 
     )))
 
@@ -72,7 +78,7 @@ server <- function(input, output, session) {
 
   
   output$contract1 <- renderUI({
-    radioButtons("contract 1","Contract 1 Type",
+    radioButtons("contract1","Contract 1 Type",
                  choices=c("Call","Put"))
   })
   output$strike1 <- renderUI({
@@ -99,43 +105,41 @@ server <- function(input, output, session) {
   })
 
   plcharttest <- reactive({
-    if(input$strategy=="Long Call"){
-      strike1 <- as.numeric(input$strike1)
-      strike2 <- as.numeric(input$strike2)
-      premium1 <- as.numeric(input$premium1)
-      premium2 <- as.numeric(input$premium2)
-      price_at_expiry <- c(0:100)
+    strike1 <- as.numeric(input$strike1)
+    strike2 <- as.numeric(input$strike2)
+    premium1 <- as.numeric(input$premium1)
+    premium2 <- as.numeric(input$premium2)
+    price_at_expiry <- c(0:100)
+    
+    plot_pl(input$strategy, input$contract1, strike1, premium1, 
+            input$contract2, strike2, premium2)
       
-      g <- ggplot(x=price_at_expiry) +
-        geom_hline(yintercept=0, color='red') +
-        geom_segment(aes(x=0, xend=strike1, y=-premium1, yend=-premium1)) +
-        # This yend=48 needs to be properly coded. Currently just hardcoded for this graph.
-        geom_segment(aes(x=strike1,xend=100,y=-premium1,yend=48)) +
-        geom_segment(aes(x=strike1,
-                         xend=strike1,
-                         y=0,
-                         yend=-premium1),
-                     linetype="dotted") +
-        
-        xlab("Stock Price at Expiry") +
-        ylab("Profit") +
-        coord_cartesian(xlim=c(40,60),ylim=c(-5,5)) +
-        scale_y_continuous(labels=dollar) +
-        ggtitle("Long Call P/L Chart") +
-        theme_bw()
       
-      return(g)
-      
-    }
   })
   
   output$plchart <- renderPlot({
+    
+    
+    
+    strike1 <- as.numeric(input$strike1)
+    strike2 <- as.numeric(input$strike2)
+    premium1 <- as.numeric(input$premium1)
+    premium2 <- as.numeric(input$premium2)
+    price_at_expiry <- c(0:100)
+    
+    plcharttest()
 
-    plcharttest
     
     
     
   })
+  
+  output$plHelpText <- renderText({
+    print("Currently implemented P/L plots include: Bull Call Spread, Bull Put Spread, Collar, Bear Call Spread, Bear Put Spread, Short Straddle, Short Strangle, and Long Call.
+          
+          These plots are designed to help you outline the profit and loss scenarios for a given position. The idea is that you would use these to get a general idea of the strategy you would like to enter, and then you would use the greek surfaces in combintion with the pricing tool to map out risks, and determine exactly which contracts you would like to buy/sell in order to enter into the given strategy.")
+  })
+
 }
 
 

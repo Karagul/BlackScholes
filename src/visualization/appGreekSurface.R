@@ -43,7 +43,7 @@ ui <- fluidPage(
                                           choices=c("Call","Put"),
                                           selected='Call')
                            ),
-                         mainPanel(withSpinner(plotlyOutput("greekplot", width="150%", height="175%"))))
+                         mainPanel(withSpinner(plotlyOutput("greekplot", width="150%", height="175%")), verbatimTextOutput("surfaceHelp")))
                           )
       )))
 
@@ -120,6 +120,13 @@ server <- function(input, output, session) {
                 zaxis = list(title = glue("{capitalize(greek)}"))
               )) %>%  add_surface(x=grid$X, y=grid$Y) 
         }) 
+
+    output$surfaceHelp <- renderText({
+      print(glue("The above surface is the {input$greek} surface for a {input$contract}.
+
+
+      In a later version of this app, there will be details regarding the interpretation of the above surface, and how it relates to other greek surfaces, along with some smaller plots of lower order greeks if applicable."))
+    })
 }
 
 
