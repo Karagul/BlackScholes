@@ -104,7 +104,7 @@ server <- function(input, output, session) {
               value=4)
   })
 
-  plcharttest <- reactive({
+  plcharts <- reactive({
     strike1 <- as.numeric(input$strike1)
     strike2 <- as.numeric(input$strike2)
     premium1 <- as.numeric(input$premium1)
@@ -119,15 +119,13 @@ server <- function(input, output, session) {
   
   output$plchart <- renderPlot({
     
-    
-    
     strike1 <- as.numeric(input$strike1)
     strike2 <- as.numeric(input$strike2)
     premium1 <- as.numeric(input$premium1)
     premium2 <- as.numeric(input$premium2)
     price_at_expiry <- c(0:100)
     
-    plcharttest()
+    plcharts()
 
     
     
@@ -135,7 +133,7 @@ server <- function(input, output, session) {
   })
   
   output$plHelpText <- renderText({
-    print("Currently implemented P/L plots include: Bull Call Spread, Bull Put Spread, Collar, Bear Call Spread, Bear Put Spread, Short Straddle, Short Strangle, and Long Call.
+    print("Currently implemented P/L plots include: Long Call, Covered Call, Secured Short Put, Bull Call Spread, Bull Put Spread, Collar, Bear Call Spread, Bear Put Spread, Short Straddle, and Short Strangle.
           
           These plots are designed to help you outline the profit and loss scenarios for a given position. The idea is that you would use these to get a general idea of the strategy you would like to enter, and then you would use the greek surfaces in combintion with the pricing tool to map out risks, and determine exactly which contracts you would like to buy/sell in order to enter into the given strategy.")
   })
