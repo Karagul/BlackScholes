@@ -6,6 +6,7 @@ library(shiny)
 library(tidyverse)
 library(pracma)
 library(plotly)
+library(shinycssloaders)
 
 
 
@@ -33,9 +34,10 @@ ui <- fluidPage(
 
             uiOutput("impVol")
           ),
-          mainPanel(plotlyOutput("volsurface", width="150%", height="175%"))),
+          
+          mainPanel(withSpinner(plotlyOutput("volsurface", width="150%", height="175%")))),
 
-                 tableOutput("pricing")),
+                 tableOutput("pricing"))
 
       )
     )
