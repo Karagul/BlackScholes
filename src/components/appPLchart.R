@@ -22,7 +22,6 @@ ui <- fluidPage(
                          choices=c("Bullish","Bearish",
                                    "Neutral","Volatility")),
           uiOutput("strategy_names"),
-          uiOutput("contract1"),
           uiOutput("strike1"),
           uiOutput("premium1"),
           
@@ -30,16 +29,12 @@ ui <- fluidPage(
           conditionalPanel(condition="(['Bull Call Spread', 'Bull Put Spread',
                                         'Bear Call Spread','Bear Put Spread', 'Short Straddle', 'Short Strangle','Iron Condor',
                      'Calendar Spread', 'Covered Strangle', 'Long Call Butterfly','Long Straddle', 'Long Strangle', 'Call Backspread', 'Put Backspread'].indexOf(input.strategy) >= 0)",
-                           radioButtons("contract2","Contract 1 Type",
-                                        choices=c("Call","Put")),
-                           textInput("strike2", "Strike 2",
-                                     value=56),
-                           textInput("premium2", "Premium 2",
-                                     value=4)
+                           uiOutput("strike2"),
+                           uiOutput("premium2")
                            )
 
         ),
-        mainPanel(withSpinner(plotOutput("plchart")), verbatimTextOutput("plHelpText"))))
+        mainPanel(withSpinner(plotOutput("plchart")), htmlOutput("plHelpText"))))
 
     )))
 
@@ -78,10 +73,6 @@ server <- function(input, output, session) {
   })
 
   
-  output$contract1 <- renderUI({
-    radioButtons("contract1","Contract 1 Type",
-                 choices=c("Call","Put"))
-  })
   output$strike1 <- renderUI({
     textInput('strike1', "Strike 1",
               value=50)
@@ -91,11 +82,7 @@ server <- function(input, output, session) {
               value=2)
   })
   
-  
-  output$contract2 <- renderUI({
-    radioButtons("contract2", "Contract 2 Type",
-              choices=c("Call","Put"))
-  })
+
   output$strike2 <- renderUI({
     textInput("strike2", "Strike 2",
               value=56)
@@ -104,6 +91,7 @@ server <- function(input, output, session) {
     textInput("premium2", "Premium 2",
               value=4)
   })
+  
 
   plcharts <- reactive({
     strike1 <- as.numeric(input$strike1)
@@ -114,7 +102,6 @@ server <- function(input, output, session) {
     
     plot_pl(input$strategy, input$contract1, strike1, premium1, 
             input$contract2, strike2, premium2)
-      
       
   })
   
@@ -133,11 +120,23 @@ server <- function(input, output, session) {
     
   })
   
-  output$plHelpText <- renderText({
-    print("Currently implemented P/L plots include: Long Call, Covered Call, Secured Short Put, Married Put, Bull Call Spread, Bull Put Spread, Collar, Bear Call Spread, Bear Put Spread, Short Straddle, and Short Strangle.
-          
-          These plots are designed to help you outline the profit and loss scenarios for a given position. The idea is that you would use these to get a general idea of the strategy you would like to enter, and then you would use the greek surfaces in combintion with the pricing tool to map out risks, and determine exactly which contracts you would like to buy/sell in order to enter into the given strategy.")
-  })
+  output$plHelpText <- renderUI({
+    
+    
+    str1 <- glue("Currently implemented P/L plots include: <br/> Long Call, Covered Call, Secured Short Put, Married Put, Bull Call Spread, Bull Put Spread, Collar, Bear Call Spread, Bear Put Spread, Short Straddle, and Short Strangle.")
+  
+    typehelp <- glue("Below is a guide to some of the UI elements. <br/> <br/> <b>Strategy Type:</b> These are four broad types of options strategy. They filter the shown options below.")
+    
+    strathelp <- glue("<b>Strategy:</b> As of yet, the implemented strategies either require 1 or 2 contracts. An additional element will appear to specify the second contract if necessary.")
+    
+    strikehelp <- glue("<b>Strike:</b> The strike prices for each of the contracts. In strategies which require more than one contract, Strike 1 is always the lower strike price. Inputs should be numeric, and relatively proportional to each other.")
+    
+    premiumhelp <- glue("<b>Premium:</b> The premium received or paid to enter each of the contracts. This is analogous to the price of the option. Inputs should be numeric and are generally between 0 and 10")
+    
+    
+    
+    HTML(paste(str1, typehelp, strathelp, strikehelp, premiumhelp, sep="<br/> <br/>"))
+    })
 
 }
 
