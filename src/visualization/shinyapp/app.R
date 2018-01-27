@@ -7,86 +7,75 @@ library(tidyverse)
 library(plotly)
 library(Hmisc)
 library(glue)
+library(shinycssloaders)
 
-source("C:\\Users\\Tyler\\PycharmProjects\\BlackScholes\\src\\utils\\greeks.R")
-source("C:\\Users\\Tyler\\PycharmProjects\\BlackScholes\\src\\utils\\pricing.R")
-#source("C:\\Users\\Tyler\\PycharmProjects\\BlackScholes\\src\\utils\\plcharts.R")
-#source("C:\\Users\\Tyler\\PycharmProjects\\BlackScholes\\src\\utils\\GreekSurface.R")
+source("utils/greeks.R")
+source("utils/pricing.R")
+source("utils/plcharts.R")
+source("utils/GreekSurface.R")
 
 # ---------------------------------- App Code ---------------------------------- #
+
 
 ui <- fluidPage(
   
   titlePanel("BlackScholes Options Dashboard"),
-
-    mainPanel(
-      tabsetPanel(
-        
-        # Greek Surface Panel
-        tabPanel("Greek Surface",
-                 sidebarLayout(
-                   sidebarPanel(
-                     textInput("strike", label = "Strike Price", value = 1),
-                     textInput("rfr", label = "'Risk-free' Rate", value = 0.05),
-                     textInput("vol", label = "Volatility", value = 0.13),
-                     sliderInput('maturity', "Maturity",
-                                 min=1, max=365, value = 90,
-                                 sep="", step=15),
-                     sliderInput('money_range', "Moneyness",
-                                 min=0, max=2, value = c(0.5, 1.5),
-                                 sep="", step=0.1),
-                     uiOutput("greekType"),
-                     radioButtons('greekOrder', "Order",
-                                  choices=c("First","Second","Third"),
-                                  selected="First"),
-                     radioButtons('contract', label="Contract Type",
-                                  choices=c("Call","Put"),
-                                  selected='Call')
-                   ),
-                   mainPanel(withSpinner(plotlyOutput("greekplot", width="150%", height="175%"))))
+  
+  mainPanel(
+    tabsetPanel(
+      # Greek Surface Tab
+      tabPanel("Greek Surface",
+               sidebarLayout(
+                 sidebarPanel(
+                   textInput("strike", label = "Strike Price", value = 1),
+                   textInput("rfr", label = "'Risk-free' Rate", value = 0.05),
+                   textInput("vol", label = "Volatility", value = 0.13),
+                   sliderInput('maturity', "Maturity",
+                               min=1, max=365, value = 45,
+                               sep="", step=15),
+                   sliderInput('money_range', "Moneyness",
+                               min=0, max=2, value = c(0.5, 1.5),
+                               sep="", step=0.1),
+                   uiOutput("greekType"),
+                   radioButtons('greekOrder', "Order",
+                                choices=c("First","Second","Third"),
+                                selected="First"),
+                   radioButtons('contract', label="Contract Type",
+                                choices=c("Call","Put"),
+                                selected='Call')
+                 ),
+                 mainPanel(withSpinner(plotlyOutput("greekplot", width="150%", height="175%")), verbatimTextOutput("surfaceHelp")))
+      ),
+      # P/L Chart Panel
+      tabPanel("P/L Chart", sidebarLayout(
+        sidebarPanel(
+          radioButtons('strat_type', "Strategy Type",
+                       choices=c("Bullish","Bearish",
+                                 "Neutral","Volatility")),
+          uiOutput("strategy_names"),
+          uiOutput("contract1"),
+          uiOutput("strike1"),
+          uiOutput("premium1"),
+          
+          # This condition must be in JS
+          conditionalPanel(condition="(['Bull Call Spread', 'Bull Put Spread',
+                                        'Bear Call Spread','Bear Put Spread', 'Short Straddle', 'Short Strangle','Iron Condor',
+                     'Calendar Spread', 'Covered Strangle', 'Long Call Butterfly','Long Straddle', 'Long Strangle', 'Call Backspread', 'Put Backspread'].indexOf(input.strategy) >= 0)",
+                           radioButtons("contract2","Contract 1 Type",
+                                        choices=c("Call","Put")),
+                           textInput("strike2", "Strike 2",
+                                     value=56),
+                           textInput("premium2", "Premium 2",
+                                     value=4)
+          )
+          
         ),
-        
-        # P/L Chart Panel
-        tabPanel("P/L Chart", sidebarLayout(
-          sidebarPanel(
-            radioButtons('stratType', "Strategy Type",
-                         choices=c("Bullish","Bearish",
-                                   "Neutral","Volatility")),
-          uiOutput("strategies")
-        ), mainPanel(plotOutput("pl_plot")))),
-        
-        # Pricing Panel
-        tabPanel("Pricing", sidebarLayout(
-          sidebarPanel(
-            textInput("spot", "Spot Price",
-                      value = 50),
-            textInput("ttm", "Time to Maturity (Years)",
-                      value = 50),
-            textInput("strike", "Strike Price",
-                      value = 50),
-            textInput("rfr", "Spot Price",
-                      value = 50),
-            radioButtons('pricing_contract', "Contract Type",
-                         choices=c("Call","Put")),
-            uiOutput("priceInput"),
-                         
-            uiOutput("impVol")
-          ),
-          mainPanel(plotlyOutput("volsurface", width="150%", height="175%"))),
-                 
-                 tableOutput("pricing")),
-        
-        
-        tabPanel("Strategy Planner", uiOutput('strategy'))
-      )
-    )
-  
-  
-)
+        mainPanel(withSpinner(plotOutput("plchart")), verbatimTextOutput("plHelpText"))))
+    )))
+
 
 server <- function(input, output, session) {
-  
-  # Greek Surface Tab
+  # GREEK SURFACE TAB
   output$greekType <- renderUI({
     
     possible_greeks <- as.tibble(t(as.data.frame(list(
@@ -158,11 +147,19 @@ server <- function(input, output, session) {
       )) %>%  add_surface(x=grid$X, y=grid$Y) 
   }) 
   
-  # Snap to viewpoint buttons -- constrained navigation
-  # 
+  output$surfaceHelp <- renderText({
+    print(glue("The above surface is the {input$greek} surface for a {input$contract} option.
+
+
+      In a later version of this app, there will be details regarding the interpretation of 
+      the above surface, and how it relates to other greek surfaces, along with some smaller 
+      plots of lower order greeks if applicable."))
+  })
   
-  # P/L Chart Tab
-  output$strategies <- renderUI({
+  
+  
+  # P/L CHART TAB
+  output$strategy_names <- renderUI({
     all_strats <- as.tibble(t(as.data.frame(list(
       c('Bullish', "Long Call"),
       c("Bullish", "Bull Call Spread"),
@@ -188,76 +185,93 @@ server <- function(input, output, session) {
     names(all_strats) <- c('strat_type', 'Strategy')
     
     selectInput('strategy', "Strategy",
-                choices=select(filter(all_strats, strat_type==input$stratType), Strategy))
+                choices=select(filter(all_strats, strat_type==input$strat_type),Strategy))
   })
   
+  
+  output$contract1 <- renderUI({
+    radioButtons("contract1","Contract 1 Type",
+                 choices=c("Call","Put"))
+  })
+  output$strike1 <- renderUI({
+    textInput('strike1', "Strike 1",
+              value=50)
+  })
+  output$premium1 <- renderUI({
+    textInput('premium1', "Premium 1",
+              value=2)
+  })
+  
+  
+  output$contract2 <- renderUI({
+    radioButtons("contract2", "Contract 2 Type",
+                 choices=c("Call","Put"))
+  })
+  output$strike2 <- renderUI({
+    textInput("strike2", "Strike 2",
+              value=56)
+  })
+  output$premium2 <- renderUI({
+    textInput("premium2", "Premium 2",
+              value=4)
+  })
+  
+  plcharts <- reactive({
+    strike1 <- as.numeric(input$strike1)
+    strike2 <- as.numeric(input$strike2)
+    premium1 <- as.numeric(input$premium1)
+    premium2 <- as.numeric(input$premium2)
+    price_at_expiry <- c(0:100)
+    
+    plot_pl(input$strategy, input$contract1, strike1, premium1, 
+            input$contract2, strike2, premium2)
+    
+    
+  })
   
   output$plchart <- renderPlot({
-    moneyness
+    
+    strike1 <- as.numeric(input$strike1)
+    strike2 <- as.numeric(input$strike2)
+    premium1 <- as.numeric(input$premium1)
+    premium2 <- as.numeric(input$premium2)
+    price_at_expiry <- c(0:100)
+    
+    plcharts()
+    
+    
+    
     
   })
   
-  
-  # Pricing Tab
-  
-  # Goal is to have pricing/implied vol update when the other is changed.
-  # Maybe add a reload button?
-  output$priceInput <- renderUI({
-    pricing_contract <- tolower(input$pricing_contract)
-    spot <- as.numeric(input$spot)
-    ttm <- as.numeric(input$ttm)
-    strike <- as.numeric(input$strike)
-    rfr <- as.numeric(input$rfr)
-    
-    tagList(
-      
-      textInput("optionPrice", "Option Price",
-                  value = priceOption(pricing_contract, strike, spot, ttm, vol, rfr))
-     )})
-  
-  output$impVol <- renderUI({
-    pricing_contract <- tolower(input$pricing_contract)
-    spot <- as.numeric(input$spot)
-    ttm <- as.numeric(input$ttm)
-    strike <- as.numeric(input$strike)
-    rfr <- as.numeric(input$rfr)
-    optionPrice <- as.numeric(input$optionPrice)
-    
-    tagList(
-      
-    textInput("pricing_vol", "(Implied) Volatility",
-              value=implied_vol(optionPrice, pricing_contract, spot, ttm))
-  )})
-  
-  # Implied volatility surface
-  output$volsurface <- renderPlotly({
-    pricing_contract <- tolower(input$pricing_contract)
-    optionPrice <- as.numeric(input$optionPrice)
-    maturities <-  seq(from=1, to=100, by=1)
-    price_range <- seq(from=-optionPrice*3, to=optionPrice*3,
-                       by=0.1)
-    grid <- meshgrid(x=price_range, y=maturities)
-    spot <- as.numeric(input$spot)
-    
-    Z <- implied_vol(grid$X, pricing_contract, spot, grid$Y)
-    
-    # layout(add_surface(plot_ly(z = ~Z), x=grid$X, y=grid$Y),
-    #        xaxis=list(title="Moneyness"), yaxis=list(title="Maturity"), zaxis=list(title="Delta"))
-    plot_ly(z = ~Z) %>% layout(
-      title = "Implied Volatility Surface",
-      scene = list(
-        xaxis = list(title = "Price"),
-        yaxis = list(title = "DTM"),
-        zaxis = list(title ="IV")
-      )) %>%  add_surface(x=grid$X, y=grid$Y)
-  })
-  
-  
-  # Strategy Builder tab
-  output$strategy <- renderUI({
-    
+  output$plHelpText <- renderText({
+    print("Currently implemented P/L plots include: Long Call, Covered Call, Secured Short Put,
+          Married Put, Bull Call Spread, Bull Put Spread, Collar, Bear Call Spread, 
+          Bear Put Spread, Short Straddle, and Short Strangle.
+          
+          These plots are designed to help you outline the profit and loss scenarios for a given position. 
+
+          The idea is that you would use these to get a general idea of the strategy you would like to enter,
+          and then you would use the greek surfaces in combintion with the pricing tool to map out risks, 
+          and determine exactly which contracts you would like to buy/sell in order to enter into the given strategy.")
   })
   
 }
+  
+
+
 
 shinyApp(ui, server)
+
+
+
+
+
+
+
+
+
+
+
+
+
