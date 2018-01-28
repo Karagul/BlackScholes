@@ -27,6 +27,7 @@ ui <- fluidPage(
       tabPanel("Greek Surface",
                sidebarLayout(
                  sidebarPanel(
+                   helpText("Please see the help text at the bottom for help navigating the interactive components."),
                    radioButtons('contract', label="Contract Type",
                                 choices=c("Call","Put"),
                                 selected='Call'),
@@ -134,7 +135,7 @@ server <- function(input, output, session) {
     grid <- meshgrid(x=moneyness, y=maturities)
     
     
-    d1 <- calc_d(grid, strike, vol, rfr)
+    d1 <- calc_d(grid, 1, vol, rfr)
     d2 <- d1 - vol*sqrt(grid$Y)
     
     plot_ly(z = ~react_z()) %>% layout(
@@ -225,8 +226,8 @@ server <- function(input, output, session) {
     premium2 <- as.numeric(input$premium2)
     price_at_expiry <- c(0:100)
     
-    plot_pl(input$strategy, input$contract1, strike1, premium1, 
-            input$contract2, strike2, premium2)
+    plot_pl(input$strategy, contract1="call", strike1, premium1, 
+            contract2="call", strike2, premium2)
     
   })
   
