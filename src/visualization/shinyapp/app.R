@@ -27,24 +27,30 @@ ui <- fluidPage(
       tabPanel("Greek Surface",
                sidebarLayout(
                  sidebarPanel(
-                   textInput("strike", label = "Strike Price", value = 1),
+                   radioButtons('contract', label="Contract Type",
+                                choices=c("Call","Put"),
+                                selected='Call'),
+                   
                    textInput("rfr", label = "'Risk-free' Rate", value = 0.05),
+                   
                    textInput("vol", label = "Volatility", value = 0.13),
+                   
                    sliderInput('maturity', "Maturity",
-                               min=1, max=365, value = 45,
+                               min=15, max=365, value = 90,
                                sep="", step=15),
+                   
                    sliderInput('money_range', "Moneyness",
                                min=0, max=2, value = c(0.5, 1.5),
                                sep="", step=0.1),
-                   uiOutput("greekType"),
+                   
                    radioButtons('greekOrder', "Order",
                                 choices=c("First","Second","Third"),
                                 selected="First"),
-                   radioButtons('contract', label="Contract Type",
-                                choices=c("Call","Put"),
-                                selected='Call')
+                   
+                   uiOutput("greekType")
+                   
                  ),
-                 mainPanel(withSpinner(plotlyOutput("greekplot", width="150%", height="175%")), verbatimTextOutput("surfaceHelp")))
+                 mainPanel(withSpinner(plotlyOutput("greekplot", width="150%", height="175%")), htmlOutput("surfaceHelp")))
       ),
       # P/L Chart Panel
       tabPanel("P/L Chart", sidebarLayout(
@@ -53,24 +59,19 @@ ui <- fluidPage(
                        choices=c("Bullish","Bearish",
                                  "Neutral","Volatility")),
           uiOutput("strategy_names"),
-          uiOutput("contract1"),
           uiOutput("strike1"),
           uiOutput("premium1"),
           
           # This condition must be in JS
           conditionalPanel(condition="(['Bull Call Spread', 'Bull Put Spread',
-                                        'Bear Call Spread','Bear Put Spread', 'Short Straddle', 'Short Strangle','Iron Condor',
-                     'Calendar Spread', 'Covered Strangle', 'Long Call Butterfly','Long Straddle', 'Long Strangle', 'Call Backspread', 'Put Backspread'].indexOf(input.strategy) >= 0)",
-                           radioButtons("contract2","Contract 1 Type",
-                                        choices=c("Call","Put")),
-                           textInput("strike2", "Strike 2",
-                                     value=56),
-                           textInput("premium2", "Premium 2",
-                                     value=4)
-          )
-          
-        ),
-        mainPanel(withSpinner(plotOutput("plchart")), verbatimTextOutput("plHelpText"))))
+                           'Bear Call Spread','Bear Put Spread', 'Short Straddle', 'Short Strangle','Iron Condor',
+                           'Calendar Spread', 'Covered Strangle', 'Long Call Butterfly','Long Straddle', 'Long Strangle', 'Call Backspread', 'Put Backspread'].indexOf(input.strategy) >= 0)",
+                           uiOutput("strike2"),
+                           uiOutput("premium2")
+        )
+        
+      ),
+      mainPanel(withSpinner(plotOutput("plchart")), htmlOutput("plHelpText"))))
     )))
 
 
@@ -104,12 +105,11 @@ server <- function(input, output, session) {
   react_z <- reactive({
     contract <- tolower(input$contract)
     greek <- tolower(input$greek)
-    strike <- as.numeric(input$strike)
     vol <- as.numeric(input$vol)
     rfr <- as.numeric(input$rfr)
     money_range=c(input$money_range[1], input$money_range[2])
     
-    greekSurface(order=input$greekOrder, greek=greek, contract=contract, strike=strike, vol=vol, rfr=rfr,
+    greekSurface(order=input$greekOrder, greek=greek, contract=contract, strike=1, vol=vol, rfr=rfr,
                  maturity=input$maturity, money_range=money_range)$Z
   })
   
@@ -118,7 +118,6 @@ server <- function(input, output, session) {
   output$greekplot <- renderPlotly({
     
     greek <- tolower(input$greek)
-    strike <- as.numeric(input$strike)
     vol <- as.numeric(input$vol)
     rfr <- as.numeric(input$rfr)
     money_range=c(input$money_range[1], input$money_range[2])
@@ -127,8 +126,8 @@ server <- function(input, output, session) {
     ## Moneyness will need to be determined based on the contract type I think, unless I can find a way to just change labels and
     ## not the values underlying the calculation.
     
-    moneyness <-  seq(from=strike*input$money_range[1],
-                      to=strike*input$money_range[2],by=(strike*input$money_range[2] - strike*input$money_range[1])/100)
+    moneyness <-  seq(from=input$money_range[1],
+                      to=input$money_range[2],by=(input$money_range[2] - input$money_range[1])/100)
     
     maturities <- seq(from=1, to=input$maturity ,by=1)
     
@@ -147,15 +146,25 @@ server <- function(input, output, session) {
       )) %>%  add_surface(x=grid$X, y=grid$Y) 
   }) 
   
-  output$surfaceHelp <- renderText({
-    print(glue("The above surface is the {input$greek} surface for a {input$contract} option.
-
-
-      In a later version of this app, there will be details regarding the interpretation of 
-      the above surface, and how it relates to other greek surfaces, along with some smaller 
-      plots of lower order greeks if applicable."))
+  output$surfaceHelp <- renderUI({
+    basic <- glue("The above surface is the {input$greek} surface for a {input$contract}. <br/> <br/> If the plot appears blank, try clicking and dragging the area. Please use the buttons at the top of the plot to rotate, pan, and reset the camera if you get lost.") 
+    
+    contracthelp <- glue("Below is a guide to some of the interactive elements: <br/> <br/> <b>Contract:</b> Whether the contract specified above is a Call or a Put. Please note that not all greeks are different for Calls and Puts. This is to be expected and is not a bug.")
+    
+    rfrhelp <- ("<b>Risk Free Rate:</b> This is the cost of carrying these contracts. Input should be numeric; a ratio that represents the interest rate per annum.")
+    
+    volhelp <- glue("<b>Volatility:</b> This is the standard deviation of stock moves in percent terms. Inputs should be between 0 and 1. The 'average' volatility of stock prices is around 0.13")
+    
+    mathelp <- glue("<b>Maturity:</b> This is measured in days until expiry. This affects one of the axis limits.")
+    
+    moneyhelp <- glue("<b>Moneyness:</b> This is a measurement of 'how profitable' an option contract is. Can think of it as how many times more or less the spot price is than the strike price, depending on the position taken. This affects the other axis' limits")
+    
+    orderhelp <- glue("<b>Greek Order:</b> Can think of this as derivaive order. Will impact which greeks are selectable.")
+    
+    
+    HTML(paste(basic, contracthelp, rfrhelp, volhelp, mathelp, moneyhelp, orderhelp, sep="<br/> <br/>"))
+    
   })
-  
   
   
   # P/L CHART TAB
@@ -189,10 +198,6 @@ server <- function(input, output, session) {
   })
   
   
-  output$contract1 <- renderUI({
-    radioButtons("contract1","Contract 1 Type",
-                 choices=c("Call","Put"))
-  })
   output$strike1 <- renderUI({
     textInput('strike1', "Strike 1",
               value=50)
@@ -203,10 +208,6 @@ server <- function(input, output, session) {
   })
   
   
-  output$contract2 <- renderUI({
-    radioButtons("contract2", "Contract 2 Type",
-                 choices=c("Call","Put"))
-  })
   output$strike2 <- renderUI({
     textInput("strike2", "Strike 2",
               value=56)
@@ -215,6 +216,7 @@ server <- function(input, output, session) {
     textInput("premium2", "Premium 2",
               value=4)
   })
+  
   
   plcharts <- reactive({
     strike1 <- as.numeric(input$strike1)
@@ -225,7 +227,6 @@ server <- function(input, output, session) {
     
     plot_pl(input$strategy, input$contract1, strike1, premium1, 
             input$contract2, strike2, premium2)
-    
     
   })
   
@@ -244,18 +245,23 @@ server <- function(input, output, session) {
     
   })
   
-  output$plHelpText <- renderText({
-    print("Currently implemented P/L plots include: Long Call, Covered Call, Secured Short Put,
-          Married Put, Bull Call Spread, Bull Put Spread, Collar, Bear Call Spread, 
-          Bear Put Spread, Short Straddle, and Short Strangle.
-          
-          These plots are designed to help you outline the profit and loss scenarios for a given position. 
-
-          The idea is that you would use these to get a general idea of the strategy you would like to enter,
-          and then you would use the greek surfaces in combintion with the pricing tool to map out risks, 
-          and determine exactly which contracts you would like to buy/sell in order to enter into the given strategy.")
+  output$plHelpText <- renderUI({
+    
+    
+    str1 <- glue("Currently implemented P/L plots include: <br/> Long Call, Covered Call, Secured Short Put, Married Put, Bull Call Spread, Bull Put Spread, Collar, Bear Call Spread, Bear Put Spread, Short Straddle, and Short Strangle.")
+    
+    typehelp <- glue("Below is a guide to some of the UI elements. <br/> <br/> <b>Strategy Type:</b> These are four broad types of options strategy. They filter the shown options below.")
+    
+    strathelp <- glue("<b>Strategy:</b> As of yet, the implemented strategies either require 1 or 2 contracts. An additional element will appear to specify the second contract if necessary.")
+    
+    strikehelp <- glue("<b>Strike:</b> The strike prices for each of the contracts. In strategies which require more than one contract, Strike 1 is always the lower strike price. Inputs should be numeric, and relatively proportional to each other.")
+    
+    premiumhelp <- glue("<b>Premium:</b> The premium received or paid to enter each of the contracts. This is analogous to the price of the option. Inputs should be numeric and are generally between 0 and 10")
+    
+    
+    
+    HTML(paste(str1, typehelp, strathelp, strikehelp, premiumhelp, sep="<br/> <br/>"))
   })
-  
 }
   
 
