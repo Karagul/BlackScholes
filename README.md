@@ -1,4 +1,5 @@
 # BlackScholes
+Not currently maintained as of 2018-02-25. Major reworks in progress.
 
 ### Package Requirements
 |Software|Package Requirements|
